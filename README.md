@@ -1,5 +1,5 @@
 # Minesweeper Game
-Console game
+Simple Minesweeper game implementation in the console
 
 ![](./screenshots/1.png "Game Start") ![](./screenshots/2.png "Game Play")
 ![](./screenshots/3.png "Win") ![](./screenshots/4.png "Lose")
