@@ -24,77 +24,18 @@ class Game {
       this.intMatrix[i] = new Array(cols).fill(null);
       this.extMatrix[i] = new Array(cols).fill(this.maskChar);
     }
-
-    this.populateInternalMatrixWithMines();
-    this.updateInternalMatrixWithMineCounts();
-  }
-
-  populateInternalMatrixWithMines() {
-    for (let row = 0; row < this.numOfRows; row++) {
-      for (let col = 0; col < this.numOfCols; col++) {
-        const randomInt = 1 + Math.floor(Math.random() * 100);
-        if (randomInt <= this.mineProbabilityPercent) {
-          this.intMatrix[row][col] = this.mineChar;
-          this.mineLocations.push([row, col]);
-        }
-      }
-    }
-  }
-
-  updateInternalMatrixWithMineCounts() {
-    for (let row = 0; row < this.numOfRows; row++) {
-      for (let col = 0; col < this.numOfCols; col++) {
-        if (this.intMatrix[row][col] === this.mineChar) {
-          continue;
-        }
-        const count = this.countAdjacentMines(row, col);
-        this.intMatrix[row][col] = count > 0 ? count : this.blankChar;
-      }
-    }
-  }
-
-  getAdjacentCells(row, col, unopened = false) {
-    const adjCells = [];
-
-    const startRow = row > 0 ? row-1 : row;
-    const startCol = col > 0 ? col-1 : col;
-    const endRow = row < this.numOfRows-1 ? row+1 : row;
-    const endCol = col < this.numOfCols-1 ? col+1 : col;
-
-    for (let currRow = startRow; currRow <= endRow; currRow++) {
-      for (let currCol = startCol; currCol <= endCol; currCol++) {
-        if (currRow === row && currCol === col) {
-          // same cell, not adjacent, so skip
-          continue;
-        }
-
-        if (!unopened || this.extMatrix[currRow][currCol] === this.maskChar) {
-          adjCells.push([currRow, currCol]);
-        }
-      }
-    }
-
-    return adjCells;
-  }
-
-  countAdjacentMines(row, col) {
-    let count = 0;
-    const adjCells = this.getAdjacentCells(row, col);
-
-    for (let cell of adjCells) {
-      const [r, c] = cell;
-      if (this.intMatrix[r][c] === this.mineChar) {
-        count++;
-      }
-    }
-
-    return count;
   }
 
   openCell(cellId) {
     const cell = this.getCellFromId(cellId);
     if (!cell) {
       return false;
+    }
+
+    if (this.cellsOpenedCount === 0) {
+      // Only on first open
+      this.populateInternalMatrixWithMines(cell);
+      // this.printIntMatrix();
     }
 
     const [r, c] = cell;
@@ -135,6 +76,75 @@ class Game {
         }
       }
     }
+  }
+
+  populateInternalMatrixWithMines(excludeCell) {
+    const [r, c] = excludeCell;
+    for (let row = 0; row < this.numOfRows; row++) {
+      for (let col = 0; col < this.numOfCols; col++) {
+        if (r === row && c === col) {
+          continue;
+        }
+
+        const randomInt = 1 + Math.floor(Math.random() * 100);
+        if (randomInt <= this.mineProbabilityPercent) {
+          this.intMatrix[row][col] = this.mineChar;
+          this.mineLocations.push([row, col]);
+        }
+      }
+    }
+
+    this.updateInternalMatrixWithMineCounts();
+  }
+
+  updateInternalMatrixWithMineCounts() {
+    for (let row = 0; row < this.numOfRows; row++) {
+      for (let col = 0; col < this.numOfCols; col++) {
+        if (this.intMatrix[row][col] === this.mineChar) {
+          continue;
+        }
+        const count = this.countAdjacentMines(row, col);
+        this.intMatrix[row][col] = count > 0 ? count : this.blankChar;
+      }
+    }
+  }
+
+  countAdjacentMines(row, col) {
+    let count = 0;
+    const adjCells = this.getAdjacentCells(row, col);
+
+    for (let cell of adjCells) {
+      const [r, c] = cell;
+      if (this.intMatrix[r][c] === this.mineChar) {
+        count++;
+      }
+    }
+
+    return count;
+  }
+
+  getAdjacentCells(row, col, unopened = false) {
+    const adjCells = [];
+
+    const startRow = row > 0 ? row-1 : row;
+    const startCol = col > 0 ? col-1 : col;
+    const endRow = row < this.numOfRows-1 ? row+1 : row;
+    const endCol = col < this.numOfCols-1 ? col+1 : col;
+
+    for (let currRow = startRow; currRow <= endRow; currRow++) {
+      for (let currCol = startCol; currCol <= endCol; currCol++) {
+        if (currRow === row && currCol === col) {
+          // same cell, not adjacent, so skip
+          continue;
+        }
+
+        if (!unopened || this.extMatrix[currRow][currCol] === this.maskChar) {
+          adjCells.push([currRow, currCol]);
+        }
+      }
+    }
+
+    return adjCells;
   }
 
   openAllUnopenedCells() {
@@ -186,34 +196,28 @@ class Game {
   }
 
   printIntMatrix() {
-    this.printColumnLabels();
-    console.log(this.separator + "|");
-    console.log("-".repeat(8) + "|" + "-".repeat(this.numOfCols*8 + 4));
-    console.log(this.separator + "|");
-
-    let rowContent = "";
-    for (let i = 0; i < this.intMatrix.length; i++) {
-      rowContent += (i+1) + this.separator + "|" + this.separator + this.intMatrix[i].join(this.separator) + this.newline;
-      rowContent += this.separator + "|" + this.newline;
-    }
-
-    console.log(rowContent);
+    this.printMatrix(this.intMatrix);
   }
 
   printExtMatrix() {
+    this.printMatrix(this.extMatrix);
+  }
+
+  printMatrix(matrix) {
     this.printColumnLabels();
     console.log(this.separator + "|");
     console.log("-".repeat(8) + "|" + "-".repeat(this.numOfCols*8 + 4));
     console.log(this.separator + "|");
 
     let rowContent = "";
-    for (let i = 0; i < this.extMatrix.length; i++) {
-      rowContent += (i+1) + this.separator + "|" + this.separator + this.extMatrix[i].join(this.separator) + this.newline;
+    for (let i = 0; i < matrix.length; i++) {
+      rowContent += (i+1) + this.separator + "|" + this.separator + matrix[i].join(this.separator) + this.newline;
       rowContent += this.separator + "|" + this.newline;
     }
 
     console.log(rowContent);
   }
+
 }
 
 module.exports = Game;

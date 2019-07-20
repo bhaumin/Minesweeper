@@ -2,7 +2,7 @@ const readline = require("readline");
 const Game = require("./Game");
 
 const newline = "\n";
-const game = new Game(5, 5);
+const game = new Game(7, 7);
 
 // console.log(newline);
 // game.printIntMatrix();
